@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useBoard, List } from '../contexts/BoardContext';
+import { useBoard } from '../contexts/useBoard';
+import type { List } from '../contexts/boardTypes';
 import CardComponent from './CardComponent';
 import { Plus, MoreHorizontal, Edit2, Trash2 } from 'lucide-react';
 

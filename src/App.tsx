@@ -1,11 +1,12 @@
 import React from 'react';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { BoardProvider } from './contexts/BoardContext';
+import { AuthProvider } from './contexts/AuthProvider';
+import { useAuth } from './contexts/useAuth';
+import { BoardProvider } from './contexts/BoardProvider';
 import AuthForm from './components/AuthForm';
 import Header from './components/Header';
 import BoardList from './components/BoardList';
 import BoardView from './components/BoardView';
-import { useBoard } from './contexts/BoardContext';
+import { useBoard } from './contexts/useBoard';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated } = useAuth();

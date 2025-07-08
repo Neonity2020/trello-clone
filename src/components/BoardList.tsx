@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useBoard } from '../contexts/BoardContext';
+import { useBoard } from '../contexts/useBoard';
 import { Plus, MoreHorizontal, Calendar, Trash2, Edit2 } from 'lucide-react';
+import type { Board } from '../contexts/boardTypes';
 
 const BoardList: React.FC = () => {
   const { boards, createBoard, updateBoard, deleteBoard, setCurrentBoard } = useBoard();
@@ -21,7 +22,7 @@ const BoardList: React.FC = () => {
     }
   };
 
-  const handleEditBoard = (board: any) => {
+  const handleEditBoard = (board: Board) => {
     setEditingBoard(board.id);
     setEditTitle(board.title);
     setEditDescription(board.description || '');

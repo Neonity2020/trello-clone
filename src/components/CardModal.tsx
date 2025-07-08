@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useBoard, Card, ChecklistItem } from '../contexts/BoardContext';
+import { useBoard } from '../contexts/useBoard';
+import type { Card, ChecklistItem } from '../contexts/boardTypes';
 import { X, Calendar, Tag, CheckSquare, MessageCircle, Plus, Trash2 } from 'lucide-react';
 
 interface CardModalProps {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react';
 
 const AuthForm: React.FC = () => {
@@ -19,7 +19,7 @@ const AuthForm: React.FC = () => {
       if (!success) {
         setError('Invalid email or password');
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useBoard } from '../contexts/BoardContext';
+import { useBoard } from '../contexts/useBoard';
 import ListComponent from './ListComponent';
 import { Plus } from 'lucide-react';
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useBoard } from '../contexts/BoardContext';
+import { useAuth } from '../contexts/useAuth';
+import { useBoard } from '../contexts/useBoard';
 import { LogOut, User, ArrowLeft } from 'lucide-react';
 
 const Header: React.FC = () => {
