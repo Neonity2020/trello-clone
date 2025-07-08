@@ -3,20 +3,33 @@ import { BoardContext } from './BoardContext';
 import type { Board, List, Card } from './boardTypes';
 
 export const BoardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [boards, setBoards] = useState<Board[]>([]);
+  const [boards, setBoards] = useState<Board[]>(() => {
+    const savedBoards = localStorage.getItem('trello-boards');
+    return savedBoards ? JSON.parse(savedBoards) : [];
+  });
   const [currentBoard, setCurrentBoard] = useState<Board | null>(null);
 
+  // 初始化 currentBoard
   useEffect(() => {
-    const savedBoards = localStorage.getItem('trello-boards');
-    if (savedBoards) {
-      const parsedBoards = JSON.parse(savedBoards);
-      setBoards(parsedBoards);
+    const savedCurrentBoard = localStorage.getItem('trello-current-board');
+    if (savedCurrentBoard) {
+      setCurrentBoard(JSON.parse(savedCurrentBoard));
     }
   }, []);
 
+  // boards 变化时写入 localStorage
   useEffect(() => {
     localStorage.setItem('trello-boards', JSON.stringify(boards));
   }, [boards]);
+
+  // currentBoard 变化时写入 localStorage
+  useEffect(() => {
+    if (currentBoard) {
+      localStorage.setItem('trello-current-board', JSON.stringify(currentBoard));
+    } else {
+      localStorage.removeItem('trello-current-board');
+    }
+  }, [currentBoard]);
 
   const createBoard = (title: string, description?: string) => {
     const newBoard: Board = {
