@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Card } from '../contexts/BoardContext';
-import { Calendar, MessageCircle, CheckSquare, Tag, Edit2, Trash2 } from 'lucide-react';
+import type { Card } from '../contexts/boardTypes';
+import { Calendar, MessageCircle, CheckSquare } from 'lucide-react';
 import CardModal from './CardModal';
 
 interface CardComponentProps {
@@ -24,26 +24,39 @@ const CardComponent: React.FC<CardComponentProps> = ({
   const handleDragStart = (e: React.DragEvent) => {
     setIsDragging(true);
     onDragStart(card.id, listId, index);
-    
+
+    // 记录鼠标在卡片上的相对位置
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
     // Set drag data
     e.dataTransfer.setData('application/json', JSON.stringify({
       cardId: card.id,
       fromListId: listId,
-      fromIndex: index
+      fromIndex: index,
+      offsetX,
+      offsetY
     }));
     e.dataTransfer.effectAllowed = 'move';
-    
+
     // Create drag image
     const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
     dragImage.style.transform = 'rotate(5deg)';
     dragImage.style.opacity = '0.8';
+    dragImage.style.position = 'absolute';
+    dragImage.style.top = '-9999px';
     document.body.appendChild(dragImage);
-    e.dataTransfer.setDragImage(dragImage, 0, 0);
-    
-    // Clean up drag image after a short delay
-    setTimeout(() => {
-      document.body.removeChild(dragImage);
-    }, 0);
+    e.dataTransfer.setDragImage(dragImage, offsetX, offsetY);
+
+    // 用 dragend 事件清理 dragImage，避免闪烁
+    const cleanup = () => {
+      if (dragImage.parentNode) {
+        document.body.removeChild(dragImage);
+      }
+      e.currentTarget.removeEventListener('dragend', cleanup);
+    };
+    e.currentTarget.addEventListener('dragend', cleanup);
   };
 
   const handleDragEnd = () => {

@@ -8,6 +8,8 @@ interface ListComponentProps {
   list: List;
 }
 
+const HYSTERESIS_ZONE = 16; // px 缓冲区高度
+
 const ListComponent: React.FC<ListComponentProps> = ({ list }) => {
   const { createCard, updateList, deleteList, moveCard, reorderCards } = useBoard();
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -15,11 +17,7 @@ const ListComponent: React.FC<ListComponentProps> = ({ list }) => {
   const [editingTitle, setEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(list.title);
   const [draggedOver, setDraggedOver] = useState(false);
-  const [draggedCard, setDraggedCard] = useState<{
-    cardId: string;
-    fromListId: string;
-    fromIndex: number;
-  } | null>(null);
+  // 已不再需要 draggedCard state
   const [dropPosition, setDropPosition] = useState<number | null>(null);
 
   const handleCreateCard = (e: React.FormEvent) => {
@@ -45,42 +43,55 @@ const ListComponent: React.FC<ListComponentProps> = ({ list }) => {
     }
   };
 
-  const handleCardDragStart = (cardId: string, fromListId: string, fromIndex: number) => {
-    setDraggedCard({ cardId, fromListId, fromIndex });
-  };
+  // 已不再需要 draggedCard state
+  const handleCardDragStart = () => {};
 
   const handleCardDragEnd = () => {
-    setDraggedCard(null);
     setDraggedOver(false);
     setDropPosition(null);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    setDraggedOver(true);
-    
-    // Calculate drop position based on mouse position
+    if (!draggedOver) setDraggedOver(true);
+
     const listElement = e.currentTarget as HTMLElement;
     const cardsContainer = listElement.querySelector('.cards-container');
     if (!cardsContainer) return;
 
-    const cards = Array.from(cardsContainer.children);
+    // 只遍历 card-draggable 元素，避免 '+ Add a card' 参与 drop 判定
+    const cards = Array.from(cardsContainer.querySelectorAll('.card-draggable'));
     const mouseY = e.clientY;
-    
+
+    if (cards.length === 0) {
+      if (dropPosition !== 0) setDropPosition(0);
+      return;
+    }
+
     let insertIndex = cards.length;
-    
+    let found = false;
+
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i] as HTMLElement;
       const rect = card.getBoundingClientRect();
-      const cardMiddle = rect.top + rect.height / 2;
-      
-      if (mouseY < cardMiddle) {
+      const mouseYRelative = mouseY - rect.top;
+      const cardMiddle = rect.height / 2;
+
+      if (mouseYRelative < cardMiddle - HYSTERESIS_ZONE) {
         insertIndex = i;
+        found = true;
+        break;
+      }
+      if (mouseYRelative < cardMiddle + HYSTERESIS_ZONE) {
+        // 在缓冲区内，保持上一次 dropPosition
+        insertIndex = dropPosition ?? i;
+        found = true;
         break;
       }
     }
-    
-    setDropPosition(insertIndex);
+    if (!found) insertIndex = cards.length;
+
+    if (insertIndex !== dropPosition) setDropPosition(insertIndex);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
@@ -100,8 +111,10 @@ const ListComponent: React.FC<ListComponentProps> = ({ list }) => {
     setDraggedOver(false);
     
     try {
+      // 支持 offsetX/offsetY 字段，便于后续扩展
       const dragData = JSON.parse(e.dataTransfer.getData('application/json'));
       const { cardId, fromListId, fromIndex } = dragData;
+      // const { offsetX, offsetY } = dragData; // 如需用可解开
       
       if (!cardId || !fromListId) return;
       
@@ -189,26 +202,28 @@ const ListComponent: React.FC<ListComponentProps> = ({ list }) => {
 
         {/* Cards Container */}
         <div className="cards-container space-y-3 mb-4 min-h-8">
+          {list.cards.length === 0 && draggedOver && (
+            <div className="h-2 bg-blue-400 rounded-full opacity-75 transition-all duration-200" key="drop-indicator-empty"></div>
+          )}
           {list.cards.map((card, index) => (
             <React.Fragment key={card.id}>
-              {/* Drop indicator */}
               {draggedOver && dropPosition === index && (
-                <div className="h-2 bg-blue-400 rounded-full opacity-75 transition-all duration-200"></div>
+                <div className="h-2 bg-blue-400 rounded-full opacity-75 transition-all duration-200" key={`drop-indicator-${index}`}></div>
               )}
-              
-              <CardComponent 
-                card={card} 
-                listId={list.id} 
-                index={index}
-                onDragStart={handleCardDragStart}
-                onDragEnd={handleCardDragEnd}
-              />
+              {/* Card 外层加 card-draggable class */}
+              <div className="card-draggable">
+                <CardComponent 
+                  card={card} 
+                  listId={list.id} 
+                  index={index}
+                  onDragStart={handleCardDragStart}
+                  onDragEnd={handleCardDragEnd}
+                />
+              </div>
             </React.Fragment>
           ))}
-          
-          {/* Drop indicator at the end */}
-          {draggedOver && dropPosition === list.cards.length && (
-            <div className="h-2 bg-blue-400 rounded-full opacity-75 transition-all duration-200"></div>
+          {draggedOver && dropPosition === list.cards.length && list.cards.length > 0 && (
+            <div className="h-2 bg-blue-400 rounded-full opacity-75 transition-all duration-200" key="drop-indicator-end"></div>
           )}
         </div>
 
